@@ -2,214 +2,79 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>人間関係OSバグ診断 - LINKER</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人間関係OS バグ診断</title>
     <style>
-        /* 全体の基本設定（スマホの背景色など） */
-        body { 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            background-color: #0d1117; 
-            color: #c9d1d9; 
-            line-height: 1.4; 
-            padding: 10px; 
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-        }
-
-        /* 診断画面の枠（スマホの横幅いっぱいに広がるよう調整） */
-        .container { 
-            width: 100%;
-            max-width: 450px; /* PCでは広がりすぎないように制限 */
-            background: #161b22; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid #30363d; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            margin-top: 10px;
-            box-sizing: border-box;
-        }
-
-        h1 { color: #58a6ff; font-size: 1.2rem; margin: 0 0 15px 0; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
-        
-        /* 画像：縦長画面で問いを押し出さないように高さを賢く制限 */
-        #question-image { 
-            width: 100%; 
-            max-height: 40vh; /* スマホ画面の高さの40%までに自動制限 */
-            object-fit: contain; 
-            border-radius: 8px; 
-            margin-bottom: 10px; 
-            display: none; 
-        }
-
-        .question { font-weight: bold; margin-bottom: 12px; text-align: left; font-size: 0.9rem; min-height: 3em; }
-        
-        /* ボタン：スマホで指で押しやすい「高さ」と「余白」に調整 */
-        .btn { 
-            display: block; 
-            width: 100%; 
-            padding: 14px 10px; /* 指でタップしやすいサイズ */
-            margin: 8px 0; 
-            background-color: #21262d; 
-            border: 1px solid #f0f6fc1a; 
-            border-radius: 8px; 
-            color: #58a6ff; 
-            text-align: left; 
-            cursor: pointer; 
-            font-size: 0.85rem;
-            line-height: 1.3;
-            box-sizing: border-box;
-        }
-        .btn:active { background-color: #30363d; } /* タップした時の反応 */
-
-        #result-screen { display: none; text-align: left; }
-        .bug-rate { font-size: 2rem; color: #ff7b72; font-weight: bold; text-align: center; margin: 15px 0; }
-        .debug-log { background: #000; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #7ee787; border: 1px solid #238636; margin-top: 15px; }
-        .log-item { margin-bottom: 10px; border-bottom: 1px dotted #238636; padding-bottom: 5px; }
-        .video-link { display: block; background: #238636; color: white; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; margin-top: 20px; font-weight: bold; font-size: 0.9rem; }
+        body { font-family: 'Courier New', monospace; background-color: #0d1117; color: #39ff14; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #container { width: 90%; max-width: 400px; border: 2px solid #39ff14; padding: 20px; border-radius: 10px; background: rgba(0,0,0,0.9); box-shadow: 0 0 20px rgba(57,255,20,0.3); text-align: center; }
+        .q-img { width: 100%; height: 200px; object-fit: contain; margin-bottom: 15px; border: 1px solid #333; background:#000; display: block; }
+        .btn { display: block; width: 100%; padding: 12px; margin: 10px 0; background: none; color: #39ff14; border: 1px solid #39ff14; border-radius: 5px; cursor: pointer; text-align: left; }
+        .btn:hover { background: #39ff14; color: #000; }
+        #loading { display: none; padding: 40px 0; font-size: 1.2rem; letter-spacing: 3px; }
     </style>
 </head>
 <body>
-
-<div class="container" id="game-container">
-    <h1>人間関係OS バグ診断</h1>
-    
-    <div id="question-screen">
-        <img id="question-image" src="" alt="質問のイメージ画像">
-        <div id="question-text" class="question"></div>
-        <div id="choices"></div>
-    </div>
-
-    <div id="result-screen">
-        <p style="text-align:center; font-size: 0.8rem;">スキャン完了。結果を出力します...</p>
-        <div class="bug-rate" id="final-rate"></div>
-        <div class="debug-log" id="debug-log">
-            <p style="color:#f85149">>>> DEBUG LOG:</p>
-            <div id="log-content"></div>
-        </div>
-        <a href="https://www.youtube.com/@LINKER%E4%BA%BA%E9%96%93%E9%96%A2%E4%BF%82OS%E3%83%87%E3%83%90%E3%83%83%E3%82%AF%E5%AE%A4" class="video-link" target="_blank">
-            OSをデバッグ（修正）する
-        </a>
+<div id="container">
+    <div id="loading">SCANNING...</div>
+    <div id="quiz-area">
+        <img id="q-img" class="q-img" src="" alt="Loading Image...">
+        <h2 id="q-text" style="font-size:1.1rem; line-height:1.4;"></h2>
+        <div id="btn-area"></div>
     </div>
 </div>
-
 <script>
-    const questions = [
-        {
-            q: "【Q1】自分の提案が却下されました。あなたの反応は？",
-            image: "q1.png",
-            choices: [
-                { text: "A: 「じゃあ好きにしていいよ」と引き下がる。", score: 70, log: "[Q1/A] 投げ出しバグ：実は執着の裏返しです。" },
-                { text: "B: 「どこがダメ？」と案を通そうと説得する。", score: 100, log: "[Q1/B] 押し付けバグ：自分の理想への執着が強めです。" },
-                { text: "C: 「どんな形なら良かった？」と意図を聞く。", score: 0, log: "[Q1/C] 正常：執着を手放せています。" }
-            ]
-        },
-        {
-            q: "【Q2】人が効率の悪いやり方をしています。どうする？",
-            image: "q2.png",
-            choices: [
-                { text: "A: 「私がやるよ、早いし」と引き取る。", score: 80, log: "[Q2/A] コントロールバグ：相手の機会を奪っています。" },
-                { text: "B: 「こうすれば早いよ」とすぐに正解を教える。", score: 60, log: "[Q2/B] 正論バグ：自分の「正解」を優先しています。" },
-                { text: "C: 「手伝えることある？」と意思を確認する。", score: 0, log: "[Q2/C] 正常：相手を尊重できています。" }
-            ]
-        },
-        {
-            q: "【Q3】相手の雑務に少しミスがありました。どうする？",
-            image: "q3.png",
-            choices: [
-                { text: "A: 「ありがとう、でも次は気をつけて」と言う。", score: 70, log: "[Q3/A] 条件付き感謝バグ：要求が感謝を上回っています。" },
-                { text: "B: 何も言わず、こっそり自分で直す。", score: 50, log: "[Q3/B] 出力エラー：感謝が相手に届いていません。" },
-                { text: "C: ミスには触れず「助かる」と感謝を伝える。", score: 0, log: "[Q3/C] 正常：純粋な感謝でデバッグ完了。" }
-            ]
-        }
+    const data = [
+        { t: "Q1: 提案が却下された時のあなたの反応は？", i: "q1.png", a: [{n:"A: 身を引いて任せる", s:30}, {n:"B: 改善点を聞く", s:10}, {n:"C: 意図を確認する", s:0}] },
+        { t: "Q2: 同僚が仕事で困っている時、どう声をかけますか？", i: "q2.png", a: [{n:"A: 無理やり代わる", s:30}, {n:"B: すぐに教える", s:20}, {n:"C: 手伝いを申し出る", s:0}] },
+        { t: "Q3: 相手のミスに気づいた時、どう指摘しますか？", i: "q3.png", a: [{n:"A: その場で指摘する", s:20}, {n:"B: こっそり直す", s:30}, {n:"C: 感謝して指摘しない", s:0}] }
     ];
 
-    let currentQuestion = 0;
-    let totalScore = 0;
-    let selectedLogs = [];
+    let idx = 0; let score = 0;
 
-    function showQuestion() {
-        const qData = questions[currentQuestion];
-        document.getElementById("question-text").innerText = qData.q;
-        const qImage = document.getElementById("question-image");
-        if (qData.image) {
-            qImage.src = qData.image;
-            qImage.style.display = "block";
-        } else {
-            qImage.style.display = "none";
-        }
-        const choicesDiv = document.getElementById("choices");
-        choicesDiv.innerHTML = "";
-        qData.choices.forEach((choice) => {
-            const btn = document.createElement("button");
-            btn.className = "btn";
-            btn.innerText = choice.text;
-            btn.onclick = () => selectChoice(choice.score, choice.log);
-            choicesDiv.appendChild(btn);
+    function render() {
+        const q = data[idx];
+        const img = document.getElementById('q-img');
+        
+        // 画像をセット。もし出なくても質問とボタンは必ず出す
+        img.src = q.i;
+        
+        // 画像が出ない時の予備動作
+        img.onerror = function() {
+            console.log(q.i + " が見つかりません。テキストのみで進行します。");
+            this.style.display = "none"; // 画像枠を消す
+        };
+        img.onload = function() {
+            this.style.display = "block"; // 画像があれば出す
+        };
+
+        document.getElementById('q-text').innerText = q.t;
+        const area = document.getElementById('btn-area');
+        area.innerHTML = '';
+        
+        q.a.forEach(opt => {
+            const b = document.createElement('button');
+            b.innerText = opt.n; b.className = 'btn';
+            b.onclick = () => {
+                score += opt.s; idx++;
+                document.getElementById('quiz-area').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('quiz-area').style.display = 'block';
+                    if(idx < data.length) render(); else result();
+                }, 800);
+            };
+            area.appendChild(b);
         });
     }
 
-    function selectChoice(score, log) {
-        totalScore += score;
-        selectedLogs.push(log);
-        currentQuestion++;
-        if (currentQuestion < questions.length) {
-            showQuestion();
-        } else {
-            showResult();
-        }
+    function result() {
+        let msg = score >= 70 ? "他人軸エラー: 暴走中" : score >= 30 ? "境界線エラー: 警告" : "自立OS: 正常稼働";
+        document.getElementById('quiz-area').innerHTML = `<h2 style="color:#fff;">DEBUG COMPLETE</h2><p style="text-align:left;">> ERROR_SCORE: ${score}%<br>> STATUS: ${msg}</p><button class="btn" onclick="location.reload()" style="text-align:center;">RE-SCAN</button>`;
     }
 
-    function showResult() {
-        document.getElementById("question-screen").style.display = "none";
-        document.getElementById("result-screen").style.display = "block";
-        const rate = Math.round((totalScore / (questions.length * 100)) * 100);
-        document.getElementById("final-rate").innerText = `バグ発生率：${rate}%`;
-        const logContent = document.getElementById("log-content");
-        selectedLogs.forEach(log => {
-            const p = document.createElement("div");
-            p.className = "log-item";
-            p.innerText = log;
-            logContent.appendChild(p);
-        });
-    }
-
-    showQuestion();
+    // 最初に実行
+    render();
 </script>
-
 </body>
 </html>
-/* 質問エリアにアニメーションを設定 */
-#question-container {
-  animation: fadeInUp 0.5s ease-out; /* 0.5秒かけてフェードイン */
-}
-
-/* アニメーションの具体的な動き（下から上へ、透明から不透明へ） */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}<div id="loading-screen" style="display: none;">
-  <div class="spinner"></div>
-  <p>システムスキャン中...</p>
-</div>
-// 選択肢を押した時の処理にこれを追加
-function nextQuestion() {
-  // ローディング画面を表示
-  document.getElementById('loading-screen').style.display = 'block';
-  document.getElementById('question-container').style.display = 'none';
-
-  // 1秒後に次の質問へ
-  setTimeout(() => {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('question-container').style.display = 'block';
-    // （ここに次の質問を出す処理が入る）
-  }, 1000); // 1000ミリ秒＝1秒
-}
