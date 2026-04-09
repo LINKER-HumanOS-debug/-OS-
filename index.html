@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>人間関係OSデバッグ室 - LINKER</title>
     <style>
+        /* サイバー・デバッグ室デザイン */
         body { 
             font-family: 'Courier New', Courier, monospace; 
             background-color: #0d1117; 
@@ -30,6 +31,7 @@
 
         h1 { color: #39ff14; font-size: 1.2rem; margin: 0 0 15px 0; border-bottom: 1px solid #39ff14; padding-bottom: 10px; text-align: center; }
         
+        /* 設問画像 */
         #question-image { 
             width: 100%; 
             max-height: 250px;
@@ -38,6 +40,16 @@
             margin-bottom: 15px; 
             border: 1px solid #333;
             display: none; 
+            background: #000;
+        }
+
+        /* 結果用ビデオ */
+        #result-video {
+            width: 100%;
+            border: 2px solid #39ff14;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
             background: #000;
         }
 
@@ -84,14 +96,21 @@
     </div>
 
     <div id="result-screen">
-        <p style="text-align:center; font-size: 0.8rem; color: #39ff14;">スキャン完了。ログを出力します...</p>
+        <p style="text-align:center; font-size: 0.8rem; color: #39ff14;">分析完了。ログを出力します...</p>
+        
+        <video id="result-video" autoplay muted playsinline>
+            <source id="video-source" src="" type="video/mp4">
+        </video>
+
         <div class="bug-rate" id="final-rate"></div>
+        
         <div class="debug-log">
             <p style="color:#ff3e3e; font-weight: bold; margin: 0 0 10px 0;">>>> DEBUG LOG:</p>
             <div id="log-content"></div>
         </div>
+        
         <a href="https://www.youtube.com/@LINKER%E4%BA%BA%E9%96%93%E9%96%A2%E4%BF%82OS%E3%83%87%E3%83%90%E3%83%83%E3%82%AF%E5%AE%A4" class="video-link" target="_blank">
-            OS修正パッチ（動画）を当てる
+            OS修正パッチ（動画一覧）を当てる
         </a>
     </div>
 </div>
@@ -156,42 +175,3 @@
         selectedLogs.push(log);
         
         document.getElementById("question-screen").style.display = "none";
-        document.getElementById("loading-screen").style.display = "block";
-        
-        setTimeout(() => {
-            document.getElementById("loading-screen").style.display = "none";
-            document.getElementById("question-screen").style.display = "block";
-            
-            currentQuestion++;
-            if (currentQuestion < questions.length) {
-                showQuestion();
-            } else {
-                showResult();
-            }
-        }, 600);
-    }
-
-    function showResult() {
-        document.getElementById("question-screen").style.display = "none";
-        document.getElementById("result-screen").style.display = "block";
-        
-        // 元の計算方式（100%を最大とするバグ率表示）
-        const rate = Math.round((totalScore / (questions.length * 100)) * 100);
-        document.getElementById("final-rate").innerText = `バグ発生率：${rate}%`;
-        
-        const logContent = document.getElementById("log-content");
-        selectedLogs.forEach((log, index) => {
-            setTimeout(() => {
-                const p = document.createElement("div");
-                p.className = "log-item";
-                p.innerText = log;
-                logContent.appendChild(p);
-            }, index * 200);
-        });
-    }
-
-    showQuestion();
-</script>
-
-</body>
-</html>
