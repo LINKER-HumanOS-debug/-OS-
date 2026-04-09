@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>人間関係OSデバッグ室 - LINKER</title>
     <style>
+        /* サイバー・デバッグ室デザイン */
         body { 
             font-family: 'Courier New', Courier, monospace; 
             background-color: #0d1117; 
-            color: #39ff14; 
+            color: #39ff14; /* サイバーグリーン */
             padding: 10px; 
             margin: 0;
             display: flex;
@@ -54,18 +55,19 @@
             color: #39ff14; 
             text-align: left; 
             cursor: pointer; 
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             line-height: 1.4;
-            transition: 0.2s;
+            transition: 0.3s;
         }
-        .btn:active { background: rgba(57, 255, 20, 0.2); }
+        .btn:hover { background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 10px #39ff14; }
 
+        /* スキャン演出 */
         #loading-screen { display: none; padding: 50px 0; text-align: center; font-weight: bold; font-size: 1.2rem; letter-spacing: 4px; }
         
         #result-screen { display: none; text-align: left; }
-        .bug-rate { font-size: 2.2rem; color: #ff3e3e; font-weight: bold; text-align: center; margin: 20px 0; }
-        .debug-log { background: #000; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #7ee787; border: 1px solid #238636; margin-top: 15px; }
-        .log-item { margin-bottom: 10px; border-bottom: 1px dotted #238636; padding-bottom: 8px; }
+        .bug-rate { font-size: 2.2rem; color: #ff3e3e; font-weight: bold; text-align: center; margin: 20px 0; text-shadow: 0 0 10px rgba(255, 62, 62, 0.5); }
+        .debug-log { background: #000; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: #7ee787; border: 1px solid #238636; margin-top: 15px; }
+        .log-item { margin-bottom: 10px; border-bottom: 1px dotted #238636; padding-bottom: 8px; line-height: 1.5; }
         
         .video-link { display: block; background: #39ff14; color: #000; text-align: center; padding: 15px; border-radius: 8px; text-decoration: none; margin-top: 20px; font-weight: bold; }
     </style>
@@ -84,10 +86,10 @@
     </div>
 
     <div id="result-screen">
-        <p style="text-align:center; font-size: 0.8rem; color: #39ff14;">スキャン完了。ログを出力します...</p>
+        <p style="text-align:center; font-size: 0.8rem; color: #39ff14;">分析完了。ログを出力します...</p>
         <div class="bug-rate" id="final-rate"></div>
         <div class="debug-log">
-            <p style="color:#ff3e3e; font-weight: bold; margin: 0 0 10px 0;">>>> DEBUG LOG:</p>
+            <p style="color:#ff3e3e; font-weight: bold; margin-top: 0;">>>> ERROR LOGS:</p>
             <div id="log-content"></div>
         </div>
         <a href="https://www.youtube.com/@LINKER%E4%BA%BA%E9%96%93%E9%96%A2%E4%BF%82OS%E3%83%87%E3%83%90%E3%83%83%E3%82%AF%E5%AE%A4" class="video-link" target="_blank">
@@ -99,11 +101,11 @@
 <script>
     const questions = [
         {
-            q: "【Q1】自分の提案が却下されました。あなたの反応は？",
+            q: "【Q1】提案が却下されました。あなたの反応は？",
             image: "q1.png",
             choices: [
                 { text: "A: 「じゃあ好きにして」と引き下がる。", score: 70, log: "[Q1/A] 投げ出しバグ：実は執着の裏返しです。" },
-                { text: "B: 「どこがダメ？」と案を通そうと説得する。", score: 100, log: "[Q1/B] 押し付けバグ：自分の理想への執着が強めです。" },
+                { text: "B: 「どこがダメ？」と説得を試みる。", score: 100, log: "[Q1/B] 押し付けバグ：自分の理想への執着が強めです。" },
                 { text: "C: 「どんな形なら良かった？」と意図を聞く。", score: 0, log: "[Q1/C] 正常：執着を手放せています。" }
             ]
         },
@@ -112,8 +114,8 @@
             image: "q2.png",
             choices: [
                 { text: "A: 「私がやるよ、早いし」と引き取る。", score: 80, log: "[Q2/A] コントロールバグ：相手の機会を奪っています。" },
-                { text: "B: 「こうすれば早いよ」とすぐに正解を教える。", score: 60, log: "[Q2/B] 正論バグ：自分の「正解」を優先しています。" },
-                { text: "C: 「手伝えることある？」と意思を確認する。", score: 0, log: "[Q2/C] 正常：相手を尊重できています。" }
+                { text: "B: 「こうすれば早いよ」とすぐに教える。", score: 60, log: "[Q2/B] 正論バグ：自分の「正解」を優先しています。" },
+                { text: "C: 「手伝えることある？」と確認する。", score: 0, log: "[Q2/C] 正常：相手を尊重できています。" }
             ]
         },
         {
@@ -136,6 +138,7 @@
         document.getElementById("question-text").innerText = qData.q;
         const qImage = document.getElementById("question-image");
         
+        // 画像読み込み
         qImage.src = qData.image;
         qImage.style.display = "block";
         qImage.onerror = () => { qImage.style.display = "none"; };
@@ -155,6 +158,7 @@
         totalScore += score;
         selectedLogs.push(log);
         
+        // スキャン演出
         document.getElementById("question-screen").style.display = "none";
         document.getElementById("loading-screen").style.display = "block";
         
@@ -168,17 +172,18 @@
             } else {
                 showResult();
             }
-        }, 600);
+        }, 800);
     }
 
     function showResult() {
         document.getElementById("question-screen").style.display = "none";
         document.getElementById("result-screen").style.display = "block";
         
-        // 元の計算方式（100%を最大とするバグ率表示）
+        // バグ率計算
         const rate = Math.round((totalScore / (questions.length * 100)) * 100);
         document.getElementById("final-rate").innerText = `バグ発生率：${rate}%`;
         
+        // ログ表示（タイピング風）
         const logContent = document.getElementById("log-content");
         selectedLogs.forEach((log, index) => {
             setTimeout(() => {
@@ -186,7 +191,7 @@
                 p.className = "log-item";
                 p.innerText = log;
                 logContent.appendChild(p);
-            }, index * 200);
+            }, index * 300);
         });
     }
 
